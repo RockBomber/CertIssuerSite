@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Генератор сертификатов для ПКРБП</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script src="static/datepicker-ru.js"></script>
+    <link rel="stylesheet" href="static/jquery-ui-timepicker-addon.css">
+    <script src="static/jquery-ui-timepicker-addon.js"></script>
+    <script src="static/jquery-ui-timepicker-ru.js"></script>
+    <style type="text/css">
+    .column {
+        float: left;
+        width: 50%;
+    }
+    .left {
+        width: 5%;
+        text-align: right;
+    }
+    .right {
+        width: 95%;
+    }
+    .leftupload {
+        width: 15%;
+        text-align: right;
+    }
+    .rightupload {
+        width: 85%;
+    }
+    span {
+        margin-right: 5%;
+    }
+    /* Clear floats after the columns */
+    .row:after {
+        content: "";
+        display: table;
+        clear: both;
+    }
+    </style>
+</head>
+{% macro render_field(field) %}
+    <div class="row">
+        <div class="column left"><span>{{ field.label }}</span></div>
+        <div class="column right">{{ field(**kwargs)|safe }}</div>
+    </div>
+    {% if field.errors %}
+        <ul style="color:red;">
+        {% for error in field.errors %}
+            <li>{{ error }}</li>
+        {% endfor %}
+        </ul><br>
+    {% endif %}
+{% endmacro %}
+<body>
+<a href="/crl">Ссылка на генератор CRL</a><br/><br/>
+<form method="post" enctype="multipart/form-data">
+    <fieldset>
+        <legend>{{ form.not_before.label }}</legend>
+        {#
+        <div class="row">
+            <div class="column left"><input type="radio" name="not_before_pick" id="not_before_pick"></div>
+            <div class="column right">{{ form.not_before(disabled=True) }}</div>
+        </div>
+        <div class="row">
+            <div class="column left"><input type="radio" name="not_before_pick" id="not_before_offset_pick" checked></div>
+            <div class="column right"><label for="not_before_offset_pick">Использовать текущую дату с учетом смещения:</label></div>
+        </div>
+        #}
+        {% for subfield in form.not_before_pick %}
+        <div class="row">
+            <div class="column left">{{ subfield }}</div>
+            {% if subfield.label.text == 'not before manual date' %}
+            <div class="column right">{{ form.not_before(disabled=True) }}</div>
+            {% endif %}
+            {% if subfield.label.text == 'not before offset' %}
+            <div class="column right"><label for="not_before_offset_pick">Использовать текущую дату с учетом смещения:</label></div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        {{ render_field(form.not_before_offset_years) }}
+        {{ render_field(form.not_before_offset_months) }}
+        {{ render_field(form.not_before_offset_days) }}
+        {{ render_field(form.not_before_offset_hours) }}
+        {{ render_field(form.not_before_offset_minutes) }}
+        {{ render_field(form.not_before_offset_seconds) }}
+    </fieldset>
+    <fieldset>
+        <legend>{{ form.not_after.label }}</legend>
+        {#
+        <div class="row">
+            <div class="column left"><input type="radio" name="not_after_pick" id="not_after_pick"></div>
+            <div class="column right">{{ form.not_after(disabled=True) }}<br></div>
+        </div>
+        <div class="row">
+            <div class="column left"><input type="radio" name="not_after_pick" id="not_after_offset_pick" checked></div>
+            <div class="column right"><label for="not_after_offset_pick">Использовать текущую дату с учетом смещения:</label></div>
+        </div>
+        #}
+        {% for subfield in form.not_after_pick %}
+        <div class="row">
+            <div class="column left">{{ subfield }}</div>
+            {% if subfield.label.text == 'not after manual date' %}
+            <div class="column right">{{ form.not_after(disabled=True) }}</div>
+            {% endif %}
+            {% if subfield.label.text == 'not after offset' %}
+            <div class="column right"><label for="not_before_offset_pick">Использовать текущую дату с учетом смещения:</label></div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        {{ render_field(form.not_after_offset_years) }}
+        {{ render_field(form.not_after_offset_months) }}
+        {{ render_field(form.not_after_offset_days) }}
+        {{ render_field(form.not_after_offset_hours) }}
+        {{ render_field(form.not_after_offset_minutes) }}
+        {{ render_field(form.not_after_offset_seconds) }}
+    </fieldset>
+    <fieldset>
+        <legend>{{ form.ca_key_name.label }}</legend>
+        {% for subfield in form.ca_key_name %}
+        <div class="row">
+            <div class="column left">{{ subfield }}</div>
+            <div class="column right">{{ subfield.label }} (<a href="{{ url('get_ca_cert', ca_key_name=subfield.data) }}">Скачать</a>)</div>
+        </div>
+        {% endfor %}
+    </fieldset>
+    <div class="row">
+        <div class="column leftupload"><span>{{ form.req_file.label }}</span></div>
+        <div class="column rightupload">{{ form.req_file(accept=".req,.pkcs10,.p10") }}</div>
+    </div>
+    <input id="request_cert" type="submit" value="Запросить сертификат" title="Выберите REQ файл" disabled>
+</form>
+<script>
+$(function() {
+    $('#not_before').datetimepicker({
+        timeFormat: 'HH:mm:ss', dateFormat: 'yy-mm-dd',
+        changeMonth: true, changeYear: true},
+        $.datepicker.regional['ru'],
+        $.timepicker.regional['ru']);
+    $('#not_after').datetimepicker({
+        timeFormat: 'HH:mm:ss', dateFormat: 'yy-mm-dd',
+        changeMonth: true, changeYear: true},
+        $.datepicker.regional['ru'],
+        $.timepicker.regional['ru']);
+    $('input[name*="not_before_offset"]').spinner();
+    $('input[name*="not_after_offset"]').spinner();
+    $('input[type="submit"]').button();
+});
+$(document).ready(function() {
+    $('#req_file').change(function() {
+        $('#request_cert').button("enable");
+    });
+    $('#not_before_pick-0').change(function() {
+        $('#not_before').datepicker("option", "disabled", ! this.checked);
+        $('input[name*="not_before_offset"]').spinner("option", "disabled", this.checked);
+    });
+    $('#not_before_pick-1').change(function() {
+        $('#not_before').datepicker("option", "disabled", this.checked);
+        $('input[name*="not_before_offset"]').spinner("option", "disabled", ! this.checked);
+    });
+    $('#not_after_pick-0').change(function() {
+        $('#not_after').datepicker("option", "disabled", ! this.checked);
+        $('input[name*="not_after_offset"]').spinner("option", "disabled", this.checked);
+    });
+    $('#not_after_pick-1').change(function() {
+        $('#not_after').datepicker("option", "disabled", this.checked);
+        $('input[name*="not_after_offset"]').spinner("option", "disabled", ! this.checked);
+    });
+});
+</script>
+</body>
+</html>

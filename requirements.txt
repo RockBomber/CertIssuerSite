@@ -1,0 +1,7 @@
+jinja2
+aiohttp
+WTForms
+markupsafe
+aiohttp-jinja2
+PyGostCrypto==0.3.8
+gunicorn
